@@ -5,7 +5,9 @@
 提供账号密码登录、短信验证码登录、查询在线状态、注销设备等功能，登录后自动检测连通性。
 注：本项目使用 gpt-5.5和opus-4.7 辅助完成。
 
-![Demo](demo.gif)
+<img src="demo.gif" width="600" alt="Demo">
+
+演示视频使用[vhs](https://github.com/charmbracelet/vhs)项目构建。
 
 ## 🚀 快速开始
 
