@@ -12,7 +12,7 @@ STATIC_CXXFLAGS ?= $(CXXFLAGS) -DZJNU_AUTH_NO_CURL
 STATIC_LDFLAGS ?= -static
 STATIC_LDLIBS ?= -pthread
 
-.PHONY: all static static-alpine verify-static clean check
+.PHONY: all static verify-static clean check
 
 all: $(TARGET)
 
@@ -23,9 +23,6 @@ static: $(STATIC_TARGET)
 
 $(STATIC_TARGET): $(SRC)
 	$(CXX) $(STATIC_CXXFLAGS) $(STATIC_LDFLAGS) -o $@ $< $(STATIC_LDLIBS)
-
-static-alpine:
-	sh scripts/build_static_alpine.sh
 
 verify-static: $(STATIC_TARGET)
 	@file $(STATIC_TARGET)

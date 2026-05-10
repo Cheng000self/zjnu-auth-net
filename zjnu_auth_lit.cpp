@@ -906,8 +906,8 @@ auto run_with_spinner(const std::string& message, Func operation) -> decltype(op
 
 class ZJNUAuth {
 public:
-    explicit ZJNUAuth(std::string base = DEFAULT_API_BASE, int timeout = 10)
-        : api_base_(std::move(base)), timeout_(timeout) {
+    explicit ZJNUAuth(std::string base = DEFAULT_API_BASE, int timeout = 10, bool use_proxy = false)
+        : api_base_(std::move(base)), timeout_(timeout), use_proxy_(use_proxy) {
         while (!api_base_.empty() && api_base_.back() == '/') {
             api_base_.pop_back();
         }
@@ -945,6 +945,12 @@ public:
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, timeout_);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+        // 默认禁用系统代理，避免干扰校园网认证
+        if (!use_proxy_) {
+            curl_easy_setopt(curl, CURLOPT_PROXY, "");
+            curl_easy_setopt(curl, CURLOPT_NOPROXY, "*");
+        }
 
         curl_slist* headers = nullptr;
         headers = curl_slist_append(headers, "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36");
@@ -1203,6 +1209,7 @@ private:
     std::string local_ip_;
     std::string local_mac_;
     int timeout_;
+    bool use_proxy_;
 };
 
 std::string normalize_operator_global(const std::string& operator_id) {
@@ -1508,6 +1515,7 @@ int cli_login(const std::vector<std::string>& args) {
     std::string username;
     std::string password;
     std::string operator_id = DEFAULT_OPERATOR;
+    bool use_proxy = false;
     std::vector<std::string> positional;
 
     for (size_t i = 0; i < args.size(); ++i) {
@@ -1515,8 +1523,10 @@ int cli_login(const std::vector<std::string>& args) {
             username = args[++i];
         } else if ((args[i] == "-p" || args[i] == "--password") && i + 1 < args.size()) {
             password = args[++i];
-        } else if ((args[i] == "-o" || args[i] == "--operator") && i + 1 < args.size()) {
+     } else if ((args[i] == "-o" || args[i] == "--operator") && i + 1 < args.size()) {
             operator_id = normalize_operator_global(args[++i]);
+     } else if (args[i] == "--use-proxy") {
+            use_proxy = true;
         } else {
             positional.push_back(args[i]);
         }
@@ -1532,7 +1542,7 @@ int cli_login(const std::vector<std::string>& args) {
         return 1;
     }
 
-    ZJNUAuth auth;
+    ZJNUAuth auth(DEFAULT_API_BASE, 10, use_proxy);
     debug_log("认证网关=" + auth.api_base() + "，本机IP=" + auth.local_ip() + "，本机MAC=" + auth.local_mac());
     std::optional<bool> state = confirm_login_state(auth);
     if (!state.has_value()) {
@@ -1555,8 +1565,14 @@ int cli_login(const std::vector<std::string>& args) {
 }
 
 int cli_logout(const std::vector<std::string>& args) {
-    (void)args;
-    ZJNUAuth auth;
+    bool use_proxy = false;
+    for (const std::string& arg : args) {
+        if (arg == "--use-proxy") {
+          use_proxy = true;
+            break;
+        }
+    }
+    ZJNUAuth auth(DEFAULT_API_BASE, 10, use_proxy);
     std::optional<bool> state = confirm_login_state(auth);
     if (!state.has_value()) {
         return 3;
@@ -1589,8 +1605,14 @@ int cli_logout(const std::vector<std::string>& args) {
 }
 
 int cli_status(const std::vector<std::string>& args) {
-    (void)args;
-    ZJNUAuth auth;
+    bool use_proxy = false;
+    for (const std::string& arg : args) {
+        if (arg == "--use-proxy") {
+            use_proxy = true;
+            break;
+        }
+    }
+    ZJNUAuth auth(DEFAULT_API_BASE, 10, use_proxy);
     std::optional<bool> state = confirm_login_state(auth);
     if (!state.has_value()) {
         return 3;
@@ -1611,10 +1633,12 @@ void print_help() {
     std::cout << "浙江师范大学校园网认证工具 C++ 版\n\n";
     std::cout << "用法:\n";
     std::cout << "  ./zjnu_auth_lit\n";
-    std::cout << "  ./zjnu_auth_lit [--debug] login <账号> <密码> [-o 运营商]\n";
-    std::cout << "  ./zjnu_auth_lit [--debug] login -u <账号> -p <密码> [-o 运营商]\n";
-    std::cout << "  ./zjnu_auth_lit [--debug] logout\n";
-    std::cout << "  ./zjnu_auth_lit [--debug] status\n\n";
+    std::cout << "  ./zjnu_auth_lit [--debug] [--use-proxy] login <账号> <密码> [-o 运营商]\n";
+    std::cout << "  ./zjnu_auth_lit [--debug] [--use-proxy] login -u <账号> -p <密码> [-o 运营商]\n";
+    std::cout << "  ./zjnu_auth_lit [--debug] [--use-proxy] logout\n";
+    std::cout << "  ./zjnu_auth_lit [--debug] [--use-proxy] status\n\n";
+    std::cout << "选项:\n";
+    std::cout << "  --use-proxy    使用系统代理（默认禁用代理）\n\n";
     std::cout << "运营商: 1 校园用户，2 校园电信，3 校园联通，4 校园移动\n";
 }
 

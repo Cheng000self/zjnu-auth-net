@@ -344,10 +344,20 @@ def auth_method_label(device: Dict[str, Any]) -> str:
 
 
 class ZJNUSimpleAuth:
-    def __init__(self, api_base: str = DEFAULT_API_BASE, timeout: int = 10) -> None:
+    def __init__(self, api_base: str = DEFAULT_API_BASE, timeout: int = 10, use_proxy: bool = False) -> None:
         self.api_base = api_base.rstrip("/")
         self.timeout = timeout
+        self.use_proxy = use_proxy
         self.session = requests.Session()
+
+        # 默认禁用系统代理，避免干扰校园网认证
+        if not use_proxy:
+            self.session.proxies = {
+                'http': None,
+                  'https': None,
+                'no_proxy': '*',
+            }
+
         self.session.headers.update(
             {
                 "User-Agent": (
@@ -913,8 +923,9 @@ def cli_login(args: argparse.Namespace) -> int:
         debug_log("login 参数不完整，缺少账号或密码，退出码 1")
         return 1
 
-    debug_log(f"执行 login 命令，账号={username}，运营商={args.operator}")
-    auth = ZJNUSimpleAuth()
+    use_proxy = getattr(args, 'use_proxy', False)
+    debug_log(f"执行 login 命令，账号={username}，运营商={args.operator}，use_proxy={use_proxy}")
+    auth = ZJNUSimpleAuth(use_proxy=use_proxy)
     debug_log(f"认证网关={auth.api_base}，本机IP={auth.local_ip}，本机MAC={auth.local_mac}")
     state = confirm_login_state(auth)
     if state is None:
@@ -942,7 +953,8 @@ def cli_login(args: argparse.Namespace) -> int:
 def cli_logout(args: argparse.Namespace) -> int:
     _ = args
     debug_log("执行 logout 命令")
-    auth = ZJNUSimpleAuth()
+    use_proxy = getattr(args, 'use_proxy', False)
+    auth = ZJNUSimpleAuth(use_proxy=use_proxy)
     debug_log(f"认证网关={auth.api_base}，本机IP={auth.local_ip}，本机MAC={auth.local_mac}")
     state = confirm_login_state(auth)
     if state is None:
@@ -982,7 +994,8 @@ def cli_logout(args: argparse.Namespace) -> int:
 def cli_status(args: argparse.Namespace) -> int:
     _ = args
     debug_log("执行 status 命令")
-    auth = ZJNUSimpleAuth()
+    use_proxy = getattr(args, 'use_proxy', False)
+    auth = ZJNUSimpleAuth(use_proxy=use_proxy)
     debug_log(f"认证网关={auth.api_base}，本机IP={auth.local_ip}，本机MAC={auth.local_mac}")
     state = confirm_login_state(auth)
     if state is None:
@@ -1004,6 +1017,7 @@ def cli_status(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="浙江师范大学校园网认证工具")
     parser.add_argument("--debug", action="store_true", help="参数模式的调试")
+    parser.add_argument("--use-proxy", action="store_true", dest="use_proxy", help="使用系统代理（默认禁用代理）")
     subparsers = parser.add_subparsers(dest="command")
 
     login = subparsers.add_parser("login", help="账号密码登录")

@@ -15,6 +15,7 @@ CLI_LOGOUT_CHECKS=4
 CLI_LOGOUT_INTERVAL=1
 REQUEST_TIMEOUT="${ZJNU_AUTH_TIMEOUT:-10}"
 CLI_DEBUG=0
+USE_PROXY=0
 UI_WIDTH=74
 
 # 终端颜色，与 Python 版 C 类保持一致。
@@ -399,7 +400,13 @@ portal_request() {
     local endpoint="$1"
     shift
     local args pair raw json curl_code
-    args=(-k -sS --noproxy "*" --connect-timeout "$REQUEST_TIMEOUT" -m "$REQUEST_TIMEOUT" -G "${API_BASE}${endpoint}")
+    args=(-k -sS --connect-timeout "$REQUEST_TIMEOUT" -m "$REQUEST_TIMEOUT" -G "${API_BASE}${endpoint}")
+
+    # 默认禁用系统代理，避免干扰校园网认证
+    if [[ "$USE_PROXY" != "1" ]]; then
+        args+=(--noproxy "*")
+    fi
+
     args+=(-H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36")
     args+=(-H "Accept: */*")
     args+=(-H "Referer: http://10.1.116.8/")
@@ -1130,10 +1137,13 @@ show_help() {
 
 用法:
   ./zjnu_auth_lit.sh
-  ./zjnu_auth_lit.sh [--debug] login <账号> <密码> [-o 运营商]
-  ./zjnu_auth_lit.sh [--debug] login -u <账号> -p <密码> [-o 运营商]
-  ./zjnu_auth_lit.sh [--debug] logout
-  ./zjnu_auth_lit.sh [--debug] status
+  ./zjnu_auth_lit.sh [--debug] [--use-proxy] login <账号> <密码> [-o 运营商]
+  ./zjnu_auth_lit.sh [--debug] [--use-proxy] login -u <账号> -p <密码> [-o 运营商]
+  ./zjnu_auth_lit.sh [--debug] [--use-proxy] logout
+  ./zjnu_auth_lit.sh [--debug] [--use-proxy] status
+
+选项:
+  --use-proxy    使用系统代理（默认禁用代理）
 
 运营商:
   1 校园用户
@@ -1207,6 +1217,10 @@ main() {
     init_device
     if [[ "${1:-}" == "--debug" ]]; then
         CLI_DEBUG=1
+        shift
+    fi
+    if [[ "${1:-}" == "--use-proxy" ]]; then
+        USE_PROXY=1
         shift
     fi
     case "${1:-}" in
