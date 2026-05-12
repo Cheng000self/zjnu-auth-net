@@ -63,6 +63,13 @@ class C:
     R = "\033[31m"
 
 
+
+# ==============================
+# 版本信息
+# ==========================
+VERSION = "1.0.2"
+AUTHOR = "rcz"
+
 # ==========================================
 # Portal 协议常量
 # ==========================================
@@ -1016,6 +1023,7 @@ def cli_status(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="浙江师范大学校园网认证工具")
+    parser.add_argument("-v", "--version", action="store_true", help="显示版本信息")
     parser.add_argument("--debug", action="store_true", help="参数模式的调试")
     parser.add_argument("--use-proxy", action="store_true", dest="use_proxy", help="使用系统代理（默认禁用代理）")
     subparsers = parser.add_subparsers(dest="command")
@@ -1035,6 +1043,11 @@ def build_parser() -> argparse.ArgumentParser:
 def cli_mode(argv: List[str]) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if args.version:
+        print(f"Author: {AUTHOR}, Version: {VERSION}")
+        return 0
+
     global CLI_DEBUG
     CLI_DEBUG = bool(args.debug)
     debug_log(f"解析参数完成: command={args.command}")

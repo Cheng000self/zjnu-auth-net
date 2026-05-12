@@ -31,6 +31,10 @@
 
 namespace {
 
+// 版本信息
+const std::string VERSION = "1.0.2";
+const std::string AUTHOR = "rcz";
+
 // Portal 协议常量，与 Python 版保持一致。
 const std::string JS_VERSION = "4.2.1";
 const std::string TERMINAL_TYPE = "1";
@@ -1633,11 +1637,13 @@ void print_help() {
     std::cout << "浙江师范大学校园网认证工具 C++ 版\n\n";
     std::cout << "用法:\n";
     std::cout << "  ./zjnu_auth_lit\n";
+    std::cout << "  ./zjnu_auth_lit -v | --version\n";
     std::cout << "  ./zjnu_auth_lit [--debug] [--use-proxy] login <账号> <密码> [-o 运营商]\n";
     std::cout << "  ./zjnu_auth_lit [--debug] [--use-proxy] login -u <账号> -p <密码> [-o 运营商]\n";
     std::cout << "  ./zjnu_auth_lit [--debug] [--use-proxy] logout\n";
     std::cout << "  ./zjnu_auth_lit [--debug] [--use-proxy] status\n\n";
     std::cout << "选项:\n";
+    std::cout << "  -v, --version  显示版本信息\n";
     std::cout << "  --use-proxy    使用系统代理（默认禁用代理）\n\n";
     std::cout << "运营商: 1 校园用户，2 校园电信，3 校园联通，4 校园移动\n";
 }
@@ -1646,6 +1652,10 @@ int cli_mode(std::vector<std::string> args) {
     if (!args.empty() && args[0] == "--debug") {
         g_debug = true;
         args.erase(args.begin());
+    }
+    if (!args.empty() && (args[0] == "-v" || args[0] == "--version")) {
+        std::cout << "Author: " << AUTHOR << ", Version: " << VERSION << '\n';
+        return 0;
     }
     if (args.empty() || args[0] == "-h" || args[0] == "--help" || args[0] == "help") {
         print_help();

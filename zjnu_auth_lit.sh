@@ -4,6 +4,10 @@
 
 set -u
 
+# 版本信息
+VERSION="1.0.2"
+AUTHOR="rcz"
+
 JS_VERSION="4.2.1"
 TERMINAL_TYPE="1"
 API_BASE="${ZJNU_AUTH_API_BASE:-http://10.1.116.8:801/eportal/portal}"
@@ -1137,12 +1141,14 @@ show_help() {
 
 用法:
   ./zjnu_auth_lit.sh
+  ./zjnu_auth_lit.sh -v | --version
   ./zjnu_auth_lit.sh [--debug] [--use-proxy] login <账号> <密码> [-o 运营商]
   ./zjnu_auth_lit.sh [--debug] [--use-proxy] login -u <账号> -p <密码> [-o 运营商]
   ./zjnu_auth_lit.sh [--debug] [--use-proxy] logout
   ./zjnu_auth_lit.sh [--debug] [--use-proxy] status
 
 选项:
+  -v, --version  显示版本信息
   --use-proxy    使用系统代理（默认禁用代理）
 
 运营商:
@@ -1229,6 +1235,9 @@ main() {
             ;;
         -h|--help|help)
             show_help
+            ;;
+        -v|--version)
+            printf 'Author: %s, Version: %s\n' "$AUTHOR" "$VERSION"
             ;;
         login)
             shift
